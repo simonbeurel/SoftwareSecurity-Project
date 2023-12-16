@@ -1,93 +1,70 @@
-#include <arpa/inet.h> // inet_addr()
-#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h> // bzero()
-#include <sys/socket.h>
-#include <unistd.h> // read(), write(), close()
-#define MAX 1024
-#define PORT 8080
-#define SA struct sockaddr
+#include <arpa/inet.h>
+#include <unistd.h>
+#define SIZE 1024
 
-void send_file(int sockfd, const char *filename) {
-    FILE *fp;
-    // Open the file for reading
-    fp = fopen(filename, "rb");
-    if (fp == NULL) {
-        printf("Error opening file for reading...\n");
-        return;
-    }
-    int n;
-    char data[MAX] = {0};
+int sockfd;
 
-    while(fgets(data, MAX, fp) != NULL) {
-        if (send(sockfd, data, sizeof(data), 0) == -1) {
-        perror("[-]Error in sending file.");
-        exit(1);
-        }
-        printf("Sent %d bytes to server : %s \n", n, data);
-        bzero(data, MAX);
-    }
+void connection(){
+    char *ip = "127.0.0.1";
+	int port = 8080;
+	int e;
 
-    printf("File sent successfully!\n");
-}
+    struct sockaddr_in server_addr;
 
-
-
-void func(int sockfd)
-{
-    char buff[MAX];
-    int n;
-    for (;;) {
-        bzero(buff, sizeof(buff));
-        printf("Enter your command : ");
-        n = 0;
-        while ((buff[n++] = getchar()) != '\n')
-            ;
-        write(sockfd, buff, sizeof(buff));
-
-        // Check if the command is for uploading a file
-        if (strncmp("sectrans -up", buff, 12) == 0) {
-            // Extract filename from the command
-            char *filename = strtok(buff + 13, " \n");
-            send_file(sockfd, filename);
-        }
-    }
-}
-
-int main()
-{
-    int sockfd, connfd;
-    struct sockaddr_in servaddr, cli;
-
-    // socket create and verification
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd == -1) {
-        printf("socket creation failed...\n");
-        exit(0);
+	if(sockfd < 0){
+		perror("[-]Error in socket");
+		exit(1);
+	}
+	printf("[+]Server socket created successfully.\n");
+
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = port;
+	server_addr.sin_addr.s_addr = inet_addr(ip);
+
+    e = connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
+    if(e == -1){
+        perror("[-]Error in socket");
+        exit(1);
     }
-    else
-        printf("Socket successfully created..\n");
-    bzero(&servaddr, sizeof(servaddr));
+    printf("[+]Connected to Server.\n");
 
-    // assign IP, PORT
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    servaddr.sin_port = htons(PORT);
+}
 
-    // connect the client socket to server socket
-    if (connect(sockfd, (SA*)&servaddr, sizeof(servaddr))
-        != 0) {
-        printf("connection with the server failed...\n");
-        exit(0);
+
+void send_file(int sockfd){
+    FILE *fp;
+    char *filename = "test.txt";
+
+    fp = fopen(filename, "rb");
+    if(fp == NULL){
+        perror("[-]Error in reading file.");
+        exit(1);
+    }
+
+    char data[SIZE] = {0};
+    while(fgets(data, SIZE, fp) != NULL){
+        if(send(sockfd, data, sizeof(data), 0) == -1){
+            perror("[-]Error in sending file.");
+            exit(1);
         }
-    else
-        printf("connected to the server..\n");
+        bzero(data, SIZE);
+    }
 
-    // function for chat
-    func(sockfd);
+}
 
-    // close the socket
-    close(sockfd);
+int main(){
+
+    connection();
+
+    /*while(1){
+
+    }*/
+
+    send_file(sockfd);
+    
+
 }
