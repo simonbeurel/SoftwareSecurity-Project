@@ -42,6 +42,33 @@ int main(){
             closedir(dir);
             printf("%s\n",msg);
             sndmsg(msg,8081);
+        }else if (strncmp(rcv_msg,"sectrans -up", 12) == 0) {
+            printf("Reception dun fichier\n");
+            char *copy = strdup(rcv_msg);
+            char *saveptr;
+            char *tokenized = strtok_r(copy, " ", &saveptr);
+            for (int i = 0; i < 2 && tokenized != NULL; ++i) {
+                tokenized = strtok_r(NULL, " ", &saveptr);
+            }
+            if (tokenized != NULL) {
+                char msg[1024];
+                //create the file on the database folder
+                const char *directory = "./database/";
+                char filepath[1024];
+                strcpy(filepath, directory);
+                strcat(filepath, tokenized);
+                FILE *file = fopen(filepath, "w");
+                getmsg(msg);
+                //write all msg in the new file
+                fwrite(msg, 1, strlen(msg), file);
+                fclose(file);
+                printf("Fichier bien reçu\n");
+
+                char msg2[1024] = "Fichier bien reçu";
+                sndmsg(msg2,8081);
+            }
+        }else{
+            printf("Commande inconnue\n");
         }
     }
     stopserver();
