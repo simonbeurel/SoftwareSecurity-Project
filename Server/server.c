@@ -2,78 +2,48 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
-
-#define SIZE 1024
-
-int sockfd, new_stock;
-
-
-void start_server(){
-	char *ip = "127.0.0.1";
-	int port = 8080;
-	int e;
-
-	//int sockfd, new_stock;
-	struct sockaddr_in server_addr, new_addr;
-	socklen_t addr_size;
-	char buffer[SIZE];
-
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if(sockfd < 0){
-		perror("[-]Error in socket");
-		exit(1);
-	}
-	printf("[+]Server socket created successfully.\n");
-
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = port;
-	server_addr.sin_addr.s_addr = inet_addr(ip);
-
-	e = bind(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
-	if(e < 0){
-		perror("[-]Error in bind");
-		exit(1);
-	}
-	printf("[+]Binding successfull.\n");
-
-	if(listen(sockfd, 10) == 0){
-		printf("[+]Listening....\n");
-	}else{
-		perror("[-]Error in listening");
-		exit(1);
-	}
-
-	addr_size = sizeof(new_addr);
-	new_stock = accept(sockfd, (struct sockaddr*)&new_addr, &addr_size);
-}
-
-void write_file(int param){
-	int n;
-	FILE *fp;
-	char *filename = "rcv.txt";
-	char buffer[SIZE];
-
-	fp = fopen(filename, "w");
-	if(fp == NULL){
-		perror("[-]Error in creating file.");
-		exit(1);
-	}
-
-	while(1){
-		n = recv(param, buffer, SIZE, 0);
-		if(n <= 0){
-			break;
-			return;
-		}
-		fprintf(fp, "%s", buffer);
-		bzero(buffer, SIZE);
-	}
-	return;
-}
-
+#include <unistd.h>
+#include <dirent.h>
+#include <ctype.h>
+#include "client.h"
+#include "server.h"
 
 int main(){
-	
-	start_server();
-	write_file(new_stock);
+	startserver(8080);
+    printf("Serveur activé...\n");
+
+    while(1){
+
+        char rcv_msg[1024];
+        getmsg(rcv_msg);
+
+        printf("Message reçu :%s\n",rcv_msg);
+
+        if(strncmp(rcv_msg,"exit", 4) == 0){
+            break;
+        }
+        else if (strncmp(rcv_msg,"sectrans -list", 14) == 0) {
+            printf("Liste des fichiers demandée...\n");
+            char msg[1024] = "";
+            strcat(msg, "Liste des fichiers disponibles :\n");
+            DIR *dir;
+            struct dirent *entry;
+            dir = opendir("./database");
+            if (dir == NULL) {
+                perror("Erreur lors de l'ouverture du répertoire");
+                exit(EXIT_FAILURE);
+            }
+            while ((entry = readdir(dir)) != NULL) {
+                if (entry->d_type == DT_REG) {
+                    strcat(msg, entry->d_name);
+                    strcat(msg, "\n");
+                }
+            }
+            closedir(dir);
+            printf("%s\n",msg);
+            sndmsg(msg,8081);
+        }
+    }
+    stopserver();
+    printf("Fin du server....\n");
 }
