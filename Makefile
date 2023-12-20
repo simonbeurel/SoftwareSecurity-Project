@@ -1,8 +1,12 @@
 .PHONY: all
 
-all: compile_client compile_server
+all: compile_client compile_server add_lib
 
 compile_client: client_executable
+
+add_lib:
+	export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./Client/:./Server/
+
 
 client_executable: ./Client/client.c
 	gcc -o ./Client/client ./Client/client.c -L./Client/ -lclient -lserver
