@@ -52,20 +52,57 @@ int main(){
             }
             if (tokenized != NULL) {
                 char msg[1024];
-                //create the file on the database folder
+                getmsg(msg);
+                if(strncmp(msg,"ERROR",5) == 0){
+                    printf("Erreur lors de la reception du fichier\n");
+                }else{
+                    //create the file on the database folder
+                    const char *directory = "./database/";
+                    char filepath[1024];
+                    strcpy(filepath, directory);
+                    strcat(filepath, tokenized);
+                    FILE *file = fopen(filepath, "w");
+                    //write all msg in the new file
+                    fwrite(msg, 1, strlen(msg), file);
+                    fclose(file);
+                    printf("Fichier bien reçu\n");
+
+                    char msg2[1024] = "Fichier bien reçu";
+                    sndmsg(msg2, 8081);
+                }
+            }
+        }else if (strncmp(rcv_msg,"sectrans -down", 14) == 0){
+            char *copy = strdup(rcv_msg);
+            char *saveptr;
+            char *tokenized = strtok_r(copy, " ", &saveptr);
+            for (int i = 0; i < 2 && tokenized != NULL; ++i) {
+                tokenized = strtok_r(NULL, " ", &saveptr);
+            }
+            if (tokenized != NULL) {
+                char msg[1024];
+                //open the file "tokenized"
                 const char *directory = "./database/";
                 char filepath[1024];
                 strcpy(filepath, directory);
                 strcat(filepath, tokenized);
-                FILE *file = fopen(filepath, "w");
-                getmsg(msg);
-                //write all msg in the new file
-                fwrite(msg, 1, strlen(msg), file);
-                fclose(file);
-                printf("Fichier bien reçu\n");
-
-                char msg2[1024] = "Fichier bien reçu";
-                sndmsg(msg2,8081);
+                FILE *file = fopen(filepath, "r");
+                if (file == NULL) {
+                    printf("Erreur lors de l'ouverture du fichier pour l'envoi\n");
+                    char msg2[1024] = "Erreur : Le fichier demandé n'existe pas\n";
+                    sndmsg(msg2, 8081);
+                }else{
+                    //write all content in msg
+                    fseek(file, 0, SEEK_END);
+                    long file_size = ftell(file);
+                    fseek(file, 0, SEEK_SET);
+                    fread(msg, 1, file_size, file);
+                    msg[file_size] = '\0';
+                    fclose(file);
+                    //send msg
+                    printf("Envoi du fichier...\n");
+                    sndmsg(msg, 8081);
+                    printf("Fichier envoyé\n");
+                }
             }
         }else{
             printf("Commande inconnue\n");
