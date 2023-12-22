@@ -35,7 +35,7 @@ int main(){
         input[strcspn(input, "\n")] = '\0';
         int answer = sndmsg(input, 8080);
 
-        if (strcmp(input, "sectrans -list") == 0) {
+        if (strncmp(input, "sectrans -list",14) == 0) {
             char msg[1024];
             getmsg(msg);
             printf("%s\n", msg);
@@ -111,9 +111,11 @@ int main(){
                     //print every char of outbuf
                     int size;
                     for (int i = 0; i < myDataSize; ++i) {
+                        printf("%c", outbuf[i]);
                         //if the char is not a printable char
                         if(outbuf[i] < 32 || outbuf[i] > 126){
                             size = i;
+                            printf("\n");
                             break;
                         }
                     }

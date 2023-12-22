@@ -30,7 +30,7 @@ int main(){
             struct dirent *entry;
             dir = opendir("./database");
             if (dir == NULL) {
-                perror("Erreur lors de l'ouverture du répertoire");
+                perror("Erreur lors de l'ouverture du répertoire\n");
                 exit(EXIT_FAILURE);
             }
             while ((entry = readdir(dir)) != NULL) {
