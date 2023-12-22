@@ -9,7 +9,7 @@ add_lib:
 
 
 client_executable: ./Client/client.c
-	gcc -o ./Client/client ./Client/client.c -L./Client/ -lclient -lserver
+	gcc -o ./Client/client ./Client/client.c -L./Client/ -lclient -lserver -lssl -lcrypto
 
 compile_server: ./Server/server.c
-	gcc -o ./Server/server ./Server/server.c -L./Server/ -lclient -lserver
+	gcc -o ./Server/server ./Server/server.c -L./Server/ -lclient -lserver -lssl -lcrypto

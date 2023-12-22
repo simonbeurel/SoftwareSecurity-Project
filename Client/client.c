@@ -4,10 +4,31 @@
 #include <unistd.h>
 #include "client.h"
 #include "server.h"
+#include <openssl/evp.h>
+#include <openssl/aes.h>
+#define AES_KEY_SIZE 128
+
+void removePadding(unsigned char *data, int *length) {
+    unsigned char padding = data[*length - 1];
+    *length -= padding;
+}
+
 
 int main(){
     printf("[+] Bienvenue !  Veuiller rentrer votre commande\n");
     startserver(8081);
+
+    // Clé de chiffrement
+    unsigned char *key = (unsigned char *)"01234567890123456789012345678901";
+    // IV (Initialisation Vector)
+    unsigned char *iv = (unsigned char *)"1234567890123456";
+    // Contexte de chiffrement
+    EVP_CIPHER_CTX *ctx;
+    // Initialisation du contexte de chiffrement
+    ctx = EVP_CIPHER_CTX_new();
+    EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv);
+
+
     while(1){
         char input[1024];
         fgets(input, sizeof(input), stdin);
@@ -40,10 +61,20 @@ int main(){
                     fseek(file, 0, SEEK_SET);
                     fread(msg, 1, file_size, file);
                     msg[file_size] = '\0';
+
+                    int myDataSize = strlen(msg);
+                    unsigned char outbuf[1024];
+                    int outlen;
+                    // Chiffrement des données
+                    EVP_EncryptUpdate(ctx, outbuf, &outlen, msg, myDataSize);
+                    myDataSize += outlen;
+                    // Finalisation du chiffrement
+                    EVP_EncryptFinal_ex(ctx, outbuf + outlen, &myDataSize);
+
                     fclose(file);
                     //send msg
                     printf("Envoi du fichier...\n");
-                    sndmsg(msg, 8080);
+                    sndmsg(outbuf, 8080);
                     printf("Fichier envoyé\n");
                     char msg2[1024];
                     getmsg(msg2);
@@ -65,8 +96,29 @@ int main(){
                     printf("%s", msg);
                 }else{
                     FILE *file = fopen(tokenized, "w");
-                    //write all msg in the new file
-                    fwrite(msg, 1, strlen(msg), file);
+
+                    EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv);
+                    int myDataSize = strlen(msg);
+
+                    unsigned char outbuf[1024];
+                    int outlen;
+                    // Déchiffrement des données
+                    EVP_DecryptUpdate(ctx, outbuf, &outlen, msg, myDataSize);
+                    myDataSize += outlen;
+                    // Finalisation du déchiffrement
+                    EVP_DecryptFinal_ex(ctx, outbuf + outlen, &outlen);
+
+                    //print every char of outbuf
+                    int size;
+                    for (int i = 0; i < myDataSize; ++i) {
+                        //if the char is not a printable char
+                        if(outbuf[i] < 32 || outbuf[i] > 126){
+                            size = i;
+                            break;
+                        }
+                    }
+
+                    fwrite(outbuf, 1, size, file);
                     fclose(file);
                     printf("Fichier bien reçu\n");
                 }
