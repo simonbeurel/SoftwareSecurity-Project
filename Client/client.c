@@ -6,6 +6,7 @@
 #include "server.h"
 #include <openssl/evp.h>
 #include <openssl/aes.h>
+#include <pcre.h>
 #define AES_KEY_SIZE 128
 
 void removePadding(unsigned char *data, int *length) {
@@ -13,6 +14,37 @@ void removePadding(unsigned char *data, int *length) {
     *length -= padding;
 }
 
+
+int check_input(char *input){
+    const char *regex_pattern = "^sectrans -list$|^sectrans -up [a-zA-Z0-9_./]*$|^sectrans -down [a-zA-Z0-9_./]*$";
+    pcre *re;
+    const char *error;
+    int erroffset;
+    re = pcre_compile(regex_pattern, 0, &error, &erroffset, NULL);
+    if (re == NULL) {
+        fprintf(stderr, "Erreur de compilation de la regex à la position %d: %s\n", erroffset, error);
+        return 1;
+    }
+    int rc;
+    int ovector[30];
+    rc = pcre_exec(re, NULL, input, strlen(input), 0, 0, ovector, sizeof(ovector));
+    if (rc < 0) {
+        if (rc == PCRE_ERROR_NOMATCH) {
+            printf("L'entrée ne correspond pas au modèle attendu.\n");
+            return 1;
+        } else {
+            printf("Erreur de correspondance de la regex %d\n", rc);
+            return 1;
+        }
+    } else {
+        if(strlen(input) > 1024){
+            printf("Votre commande est trop longue, risque de sécurité\n");
+            return 1;
+        }
+    }
+    pcre_free(re);
+    return 0;
+}
 
 int main(){
     printf("[+] Bienvenue !  Veuiller rentrer votre commande\n");
@@ -56,6 +88,11 @@ int main(){
         char input[1024];
         fgets(input, sizeof(input), stdin);
         input[strcspn(input, "\n")] = '\0';
+
+        if(check_input(input) == 1){
+            exit(0);
+        }
+
         int answer = sndmsg(input, 8080);
 
         if (strncmp(input, "sectrans -list",14) == 0) {
@@ -134,11 +171,11 @@ int main(){
                     //print every char of outbuf
                     int size;
                     for (int i = 0; i < myDataSize; ++i) {
-                        printf("%c", outbuf[i]);
+                        //printf("%c", outbuf[i]);
                         //if the char is not a printable char
                         if(outbuf[i] < 32 || outbuf[i] > 126){
                             size = i;
-                            printf("\n");
+                            //printf("\n");
                             break;
                         }
                     }
