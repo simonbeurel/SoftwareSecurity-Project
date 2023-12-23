@@ -8,9 +8,27 @@
 #include "client.h"
 #include "server.h"
 
+struct user{
+    char *name;
+    char *password;
+    struct user *next;
+};
+
+
+
 int main(){
 	startserver(8080);
     printf("Serveur activé...\n");
+
+    //create the first user admin admin
+    struct user *admin = malloc(sizeof(struct user));
+    admin->name = strdup("admin");
+    admin->password = strdup("admin");
+
+    struct user *new_user = malloc(sizeof(struct user));
+    new_user->name = strdup("test");
+    new_user->password = strdup("test");
+    admin->next = new_user;
 
     while(1){
 
@@ -21,6 +39,29 @@ int main(){
 
         if(strncmp(rcv_msg,"exit", 4) == 0){
             break;
+        }
+        else if (strncmp(rcv_msg, "connection",10) == 0) {
+            char user_test[1024];
+            getmsg(user_test);
+            char password_test[1024];
+            getmsg(password_test);
+            struct user *index = admin;
+            int found = 0;
+            while(index != NULL){
+                if(strncmp(index->name,user_test,strlen(index->name)) == 0 && strncmp(index->password,password_test,strlen(index->password)) == 0){
+                    printf("Connexion réussie\n");
+                    char msg[1024] = "Connexion réussie";
+                    sndmsg(msg,8081);
+                    found = 1;
+                    break;
+                }
+                index = index->next;
+            }
+            if(found==0){
+                printf("Erreur : Identifiant ou mot de passe incorrect\n");
+                char msg[1024] = "Erreur : Identifiant ou mot de passe incorrect";
+                sndmsg(msg,8081);
+            }
         }
         else if (strncmp(rcv_msg,"sectrans -list", 14) == 0) {
             printf("Liste des fichiers demandée...\n");

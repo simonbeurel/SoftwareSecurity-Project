@@ -28,6 +28,29 @@ int main(){
     ctx = EVP_CIPHER_CTX_new();
     EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv);
 
+    printf("Veuillez rentrer votre identifiant\n");
+    char username[1024];
+    fgets(username, sizeof(username), stdin);
+
+    printf("Veuillez rentrer votre mot de passe\n");
+    char password[1024];
+    fgets(password, sizeof(password), stdin);
+
+    char msg[1024] = "connection";
+    sndmsg(msg, 8080);
+    sndmsg(username, 8080);
+    sndmsg(password, 8080);
+
+    char msg2[1024];
+    getmsg(msg2);
+
+    if(strncmp(msg2,"Erreur",6) == 0){
+        printf("%s", msg2);
+        exit(0);
+    }else{
+        printf("Connexion réussie, vous pouvez rentrer vos commandes\n");
+    }
+
 
     while(1){
         char input[1024];
