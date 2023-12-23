@@ -7,6 +7,7 @@
 #include <openssl/evp.h>
 #include <openssl/aes.h>
 #include <pcre.h>
+#include <time.h>
 #define AES_KEY_SIZE 128
 
 void removePadding(unsigned char *data, int *length) {
@@ -83,14 +84,29 @@ int main(){
         printf("Connexion réussie, vous pouvez rentrer vos commandes\n");
     }
 
-
+    int number_requests = 0;
+    time_t currentTime=time(NULL);
     while(1){
+
         char input[1024];
         fgets(input, sizeof(input), stdin);
         input[strcspn(input, "\n")] = '\0';
 
         if(check_input(input) == 1){
             exit(0);
+        }
+
+        number_requests++;
+
+        time_t newTime=time(NULL);
+        if(difftime(newTime,currentTime) <= 60 && number_requests > 10){
+            printf("Vous avez fait trop de requêtes en peu de temps, veuillez attendre 1 minute, le système se met en pause\n");
+            sleep(60);
+            number_requests = 0;
+            currentTime=time(NULL);
+        }else if (difftime(newTime,currentTime) > 60){
+            number_requests = 0;
+            currentTime=time(NULL);
         }
 
         int answer = sndmsg(input, 8080);
