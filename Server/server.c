@@ -14,11 +14,55 @@ struct user{
     struct user *next;
 };
 
+struct public_key{
+    char *name;
+    char *key;
+    char *iv;
+    struct public_key *next;
+};
+
+void addkey(struct public_key *key, char *name, char *key2, char *iv2){
+    struct public_key *index = key;
+    while(index->next != NULL){
+        //if the key already exist, we update it
+        if(strncmp(index->name,name,strlen(index->name)) == 0){
+            index->key = strdup(key2);
+            index->iv = strdup(iv2);
+            return;
+        }
+        index = index->next;
+    }
+    struct public_key *new_key = malloc(sizeof(struct public_key));
+    new_key->name = strdup(name);
+    new_key->key = strdup(key2);
+    new_key->iv = strdup(iv2);
+    new_key->next = NULL;
+    index->next = new_key;
+}
+
+struct public_key *getkey(struct public_key *key, char *name){
+    struct public_key *index = key;
+    while(index != NULL){
+        if(strncmp(index->name,name,strlen(index->name)) == 0){
+            return index;
+        }
+        index = index->next;
+    }
+    return NULL;
+}
+
 
 
 int main(){
 	startserver(8080);
     printf("Serveur activé...\n");
+
+    //create the first key
+    struct public_key *key = malloc(sizeof(struct public_key));
+    key->name = strdup("NULL");
+    key->key = strdup("NULL");
+    key->iv = strdup("NULL");
+    key->next = NULL;
 
     //create the first user admin admin
     struct user *admin = malloc(sizeof(struct user));
@@ -108,6 +152,13 @@ int main(){
                     fclose(file);
                     printf("Fichier bien reçu\n");
 
+                    //get the key and iv
+                    char key2[1024];
+                    getmsg(key2);
+                    char iv2[1024];
+                    getmsg(iv2);
+                    addkey(key,tokenized,key2,iv2);
+
                     char msg2[1024] = "Fichier bien reçu";
                     sndmsg(msg2, 8081);
                 }
@@ -142,6 +193,10 @@ int main(){
                     //send msg
                     printf("Envoi du fichier...\n");
                     sndmsg(msg, 8081);
+                    //get the key and iv
+                    struct public_key *key2 = getkey(key,tokenized);
+                    sndmsg(key2->key, 8081);
+                    sndmsg(key2->iv, 8081);
                     printf("Fichier envoyé\n");
                 }
             }

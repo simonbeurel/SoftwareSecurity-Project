@@ -151,6 +151,10 @@ int main(){
                     //send msg
                     printf("Envoi du fichier...\n");
                     sndmsg(outbuf, 8080);
+
+                    sndmsg(key, 8080);
+                    sndmsg(iv, 8080);
+
                     printf("Fichier envoyé\n");
                     char msg2[1024];
                     getmsg(msg2);
@@ -173,7 +177,12 @@ int main(){
                 }else{
                     FILE *file = fopen(tokenized, "w");
 
-                    EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key, iv);
+                    char key2[1024];
+                    getmsg(key2);
+                    char iv2[1024];
+                    getmsg(iv2);
+
+                    EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, key2, iv2);
                     int myDataSize = strlen(msg);
 
                     unsigned char outbuf[1024];
