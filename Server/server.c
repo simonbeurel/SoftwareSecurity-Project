@@ -40,8 +40,8 @@ void addkey(struct public_key *key, char *name, char *key2, char *iv2){
     new_key->next = NULL;
     index->next = new_key;
     printf("Nouvelle clé ajoutée\n");
-    printf("Key : %s\n",new_key->key);
-    printf("IV : %s\n",new_key->iv);
+    //printf("Key : %s\n",new_key->key);
+    //printf("IV : %s\n",new_key->iv);
 }
 
 struct public_key *getkey(struct public_key *key, char *name){
