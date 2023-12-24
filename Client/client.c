@@ -8,7 +8,7 @@
 #include <openssl/aes.h>
 #include <pcre.h>
 #include <time.h>
-#define AES_KEY_SIZE 128
+#define AES_KEY_SIZE 256
 
 void removePadding(unsigned char *data, int *length) {
     unsigned char padding = data[*length - 1];
@@ -47,14 +47,41 @@ int check_input(char *input){
     return 0;
 }
 
+unsigned char *generate_key() {
+    unsigned char *key = (unsigned char *)malloc(AES_KEY_SIZE / 8);
+    FILE *fp;
+    fp = fopen("/dev/urandom", "rb");
+    if (fp == NULL) {
+        perror("Erreur lors de l'ouverture de /dev/urandom");
+        exit(EXIT_FAILURE);
+    }
+    fread(key, 1, AES_KEY_SIZE / 8, fp);
+    fclose(fp);
+    return key;
+}
+
+unsigned char *generate_iv() {
+    unsigned char *iv = (unsigned char *)malloc(AES_KEY_SIZE / 8);
+    FILE *fp;
+    fp = fopen("/dev/urandom", "rb");
+    if (fp == NULL) {
+        perror("Erreur lors de l'ouverture de /dev/urandom");
+        exit(EXIT_FAILURE);
+    }
+    fread(iv, 1, AES_KEY_SIZE / 8, fp);
+    fclose(fp);
+    return iv;
+}
+
+
 int main(){
     printf("[+] Bienvenue !  Veuiller rentrer votre commande\n");
     startserver(8081);
 
     // Clé de chiffrement
-    unsigned char *key = (unsigned char *)"01234567890123456789012345678901";
+    unsigned char *key = generate_key();
     // IV (Initialisation Vector)
-    unsigned char *iv = (unsigned char *)"1234567890123456";
+    unsigned char *iv = generate_iv();
     // Contexte de chiffrement
     EVP_CIPHER_CTX *ctx;
     // Initialisation du contexte de chiffrement
