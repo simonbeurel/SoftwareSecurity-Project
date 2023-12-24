@@ -28,6 +28,7 @@ void addkey(struct public_key *key, char *name, char *key2, char *iv2){
         if(strncmp(index->name,name,strlen(index->name)) == 0){
             index->key = strdup(key2);
             index->iv = strdup(iv2);
+            printf("Clé mise à jour\n");
             return;
         }
         index = index->next;
@@ -38,6 +39,9 @@ void addkey(struct public_key *key, char *name, char *key2, char *iv2){
     new_key->iv = strdup(iv2);
     new_key->next = NULL;
     index->next = new_key;
+    printf("Nouvelle clé ajoutée\n");
+    printf("Key : %s\n",new_key->key);
+    printf("IV : %s\n",new_key->iv);
 }
 
 struct public_key *getkey(struct public_key *key, char *name){
