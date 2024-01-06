@@ -142,7 +142,10 @@ int main(){
             char msg[1024];
             getmsg(msg);
             printf("%s\n", msg);
-        } else if (strncmp(input, "sectrans -up", 12) == 0) {
+        }else if (strncmp(input, "exit", 4) == 0){
+            exit(0);
+        }
+        else if (strncmp(input, "sectrans -up", 12) == 0) {
             char *copy = strdup(input);
             char *saveptr;
             char *tokenized = strtok_r(copy, " ", &saveptr);
