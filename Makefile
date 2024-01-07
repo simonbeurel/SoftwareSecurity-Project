@@ -1,8 +1,8 @@
 .PHONY: all install-dependencies
 
-all: compile_client compile_server add_lib
+all: install-dependencies compile_client compile_server add_lib
 
-install-dependencies-ubuntu:
+install-dependencies:
 	sudo apt-get update
 	sudo apt-get install libpcre3 libpcre3-dev
 
